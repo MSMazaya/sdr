@@ -1,12 +1,14 @@
 import numpy as np
 import random
 import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
+import sys
+
 f = lambda x:  5*x**3 - x**2 + x 
 
-def gaussian_noise(x,mean,std):
-    noise = np.random.normal(mean, std, size = x.shape)
-    x_noisy = x + noise
-    return x_noisy 
+def gaussian_noise(mean,std):
+    noise = np.random.normal(mean, std)
+    return noise 
 
 def generate_random(start, end, n):
     return [random.randint(start, end) for _ in range(n)]
@@ -104,28 +106,35 @@ def main():
     random.seed(13320028)
     x = sorted(generate_random(-5, 5, 100))
 
-    x_train = np.array([[i] for i in x if i < 0 or i > 2])
-    # x_test = np.array([[i] for i in x if i > 0 or i < 2])
-    
-    y_train = np.array([f(i) for i in x if i < 0 or i > 2])
-    # y_test = np.array([f(i) for i in x if i > 0 or i < 2])
+    X = np.array([[i] for i in x if i < 0 or i > 2])
 
-    model = PolynomailRegression( degree = 9, learning_rate = 0.01, iterations = 500 )
- 
-    model.fit( x_train, y_train )
+    mean = 0
+    std = np.sqrt(300)
+    Y = np.array([f(i) + gaussian_noise(mean, std) for i in x if i < 0 or i > 2])
     
-    y_pred = model.predict( x_train )
-#    
-    plt.scatter( x_train, y_train, color = 'blue' )
+    X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2, random_state=13320028)
+
+    plt.scatter(X_test, Y_test, color='red')
+
+    min = sys.maxsize
+    index = 1
+    for i in range(1, 9):
+        model = PolynomailRegression( degree = i, learning_rate = 0.01, iterations = 500 )
+ 
+        model.fit( X_train, Y_train )
+    
+        y_pred = model.predict( X_train )
+        error = np.sum((y_pred - Y_train)**2)
+
+        if error < min:
+            index = i
+            min = error
+
+        plt.plot(sorted(X_train), sorted(y_pred), label='degree = {}, error = {}'.format(i, error))
    
-    plt.plot( x_train, y_pred, color = 'orange' )
-   
-    plt.title( 'X vs Y' )
-   
-    plt.xlabel( 'X' )
-   
-    plt.ylabel( 'Y' )
-   
+
+    plt.title('Polynomial Regression, with result of degree as best fit = {}'.format(index))
+    plt.legend()
     plt.show()
 
 if __name__ == "__main__":
