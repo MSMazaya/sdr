@@ -13,94 +13,48 @@ def gaussian_noise(mean,std):
 def generate_random(start, end, n):
     return [random.randint(start, end) for _ in range(n)]
 
-class PolynomailRegression() :
      
-    def __init__( self, degree, learning_rate, iterations ) :
-         
-        self.degree = degree
-         
-        self.learning_rate = learning_rate
-         
-        self.iterations = iterations
-         
-    # function to transform X
-     
-    def transform( self, X ) :
-         
-        # initialize X_transform
-         
-        X_transform = np.ones( ( self.m, 1 ) )
-         
-        j = 0
-     
-        for j in range( self.degree + 1 ) :
-             
-            if j != 0 :
-                 
-                x_pow = np.power( X, j )
-                 
-                # append x_pow to X_transform
-                 
-                X_transform = np.append( X_transform, x_pow.reshape( -1, 1 ), axis = 1 )
- 
-        return X_transform  
-     
-    # function to normalize X_transform
-     
-    def normalize( self, X ) :
-         
-        X[:, 1:] = ( X[:, 1:] - np.mean( X[:, 1:], axis = 0 ) ) / np.std( X[:, 1:], axis = 0 )
-         
-        return X
-         
-    # model training
-     
-    def fit( self, X, Y ) :
-         
-        self.X = X
-     
-        self.Y = Y
-     
-        self.m, self.n = self.X.shape
-     
-        # weight initialization
-     
-        self.W = np.zeros( self.degree + 1 )
-         
-        # transform X for polynomial  h( x ) = w0 * x^0 + w1 * x^1 + w2 * x^2 + ........+ wn * x^n
-         
-        X_transform = self.transform( self.X )
-         
-        # normalize X_transform
-         
-        X_normalize = self.normalize( X_transform )
-                 
-        # gradient descent learning
-     
-        for i in range( self.iterations ) :
-             
-            h = self.predict( self.X )
-         
-            error = h - self.Y
-             
-            # update weights
-         
-            self.W = self.W - self.learning_rate * ( 1 / self.m ) * np.dot( X_normalize.T, error )
-         
-        return self
-     
-    # predict
-     
-    def predict( self, X ) :
-      
-        # transform X for polynomial  h( x ) = w0 * x^0 + w1 * x^1 + w2 * x^2 + ........+ wn * x^n
-         
-        X_transform = self.transform( X )
-         
-        X_normalize = self.normalize( X_transform )
-         
-        return np.dot( X_transform, self.W )
+def normalize(x) :
+    x[:, 1:] = ( x[:, 1:] - np.mean( x[:, 1:], axis = 0 ) ) / np.std( x[:, 1:], axis = 0 )
+    return x
 
+def polinomialFitting(X, Y, degree, learning_rate, iterations ) :
+    m, _ = X.shape
+    W = np.zeros( degree + 1 )
+
+    X_transform = np.ones( ( m, 1 ) )
+    j = 0
+    for j in range(degree+1) :
+        if j != 0 :
+            x_pow = np.power( X, j )
+            X_transform = np.append( X_transform, x_pow.reshape( -1, 1 ), axis = 1 )
+
+    X_normalize = normalize(X_transform)
+ 
+    for _ in range(iterations) :
+        X_transform = np.ones( ( m, 1 ) )
+        j = 0
+        for j in range(degree+1) :
+            if j != 0 :
+                x_pow = np.power( X, j )
+                X_transform = np.append( X_transform, x_pow.reshape( -1, 1 ), axis = 1 )
+
+        X_normalize = normalize(X_transform)
+        h = np.dot(X_transform, W)
+        error = h - Y
+        W = W - learning_rate * ( 1 / m ) * np.dot( X_normalize.T, error )
+
+    def predict(X) :
+        X_transform = np.ones( ( m, 1 ) )
+        j = 0
+        for j in range(degree+1) :
+            if j != 0 :
+                x_pow = np.power( X, j )
+                X_transform = np.append( X_transform, x_pow.reshape( -1, 1 ), axis = 1 )
+        X_normalize = normalize(X_transform)
+        return np.dot(X_transform, W)
+
+    return predict 
 
 def main():
     random.seed(13320028)
@@ -118,18 +72,17 @@ def main():
 
     min = sys.maxsize
     index = 1
+
     for i in range(1, 9):
-        model = PolynomailRegression( degree = i, learning_rate = 0.01, iterations = 500 )
+        predict = polinomialFitting(X_train, Y_train, i, 0.01, 1000)
  
-        model.fit( X_train, Y_train )
-    
-        y_pred = model.predict( X_train )
+        y_pred = predict(X_train)
         error = np.sum((y_pred - Y_train)**2)
 
         if error < min:
             index = i
             min = error
-
+        
         plt.plot(sorted(X_train), sorted(y_pred), label='degree = {}, error = {}'.format(i, error))
    
 
